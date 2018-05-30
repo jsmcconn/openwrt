@@ -220,27 +220,45 @@ $(eval $(call KernelPackage,dax))
 define KernelPackage/dm
   SUBMENU:=$(BLOCK_MENU)
   TITLE:=Device Mapper
-  DEPENDS:=+kmod-crypto-manager +LINUX_4_14:kmod-dax
+  DEPENDS:=+kmod-crypto-manager +LINUX_4_14:kmod-dax +kmod-md-mod +kmod-md-raid456 +kmod-lib-crc32c
   # All the "=n" are unnecessary, they're only there
   # to stop the config from asking the question.
   # MIRROR is M because I've needed it for pvmove.
   KCONFIG:= \
-	CONFIG_BLK_DEV_MD=n \
-	CONFIG_DM_DEBUG=n \
-	CONFIG_DM_UEVENT=n \
-	CONFIG_DM_DELAY=n \
-	CONFIG_DM_LOG_WRITES=n \
+	CONFIG_BLK_DEV_DM=m \
 	CONFIG_DM_MQ_DEFAULT=n \
-	CONFIG_DM_MULTIPATH=n \
-	CONFIG_DM_ZERO=n \
-	CONFIG_DM_SNAPSHOT=n \
+	CONFIG_DM_DEBUG=n \
+	CONFIG_DM_BUFIO=m \
+	CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING=n \
+	CONFIG_DM_DEBUG_BLOCK_STACK_TRACING=n \
+	CONFIG_DM_BIO_PRISON=m \
+	CONFIG_DM_PERSISTENT_DATA=m \
+	CONFIG_DM_UNSTRIPED=m \
+	CONFIG_DM_CRYPT=m \
+	CONFIG_DM_SNAPSHOT=m \
+	CONFIG_DM_THIN_PROVISIONING=m \
+	CONFIG_DM_CACHE=m \
+	CONFIG_DM_CACHE_SMQ=m \
+	CONFIG_DM_CACHE_CLEANER=m \
+	CONFIG_DM_ERA=m \
+	CONFIG_DM_MIRROR=m \
 	CONFIG_DM_LOG_USERSPACE=n \
-	CONFIG_MD=y \
-	CONFIG_BLK_DEV_DM \
-	CONFIG_DM_CRYPT \
-	CONFIG_DM_MIRROR
-  FILES:=$(LINUX_DIR)/drivers/md/dm-*.ko
-  AUTOLOAD:=$(call AutoLoad,30,dm-mod dm-log dm-region-hash dm-mirror dm-crypt)
+	CONFIG_DM_RAID=m \
+	CONFIG_DM_ZERO=m \
+	CONFIG_DM_MULTIPATH=n \
+	CONFIG_DM_MULTIPATH_QL=n \
+	CONFIG_DM_MULTIPATH_ST=n \
+	CONFIG_DM_DELAY=n \
+	CONFIG_DM_UEVENT=n \
+	CONFIG_DM_FLAKEY=n \
+	CONFIG_DM_VERITY=n \
+	CONFIG_DM_VERITY_FEC=n \
+	CONFIG_DM_SWITCH=n \
+	CONFIG_DM_LOG_WRITES=n \
+	CONFIG_DM_INTEGRITY=n \
+	CONFIG_DM_ZONED=n
+  FILES:=$(LINUX_DIR)/drivers/md/dm-*.ko $(LINUX_DIR)/drivers/md/persistent-data/dm-*.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-mod dm-log dm-region-hash dm-bio-prison dm-cache-smq dm-mirror dm-snapshot dm-bufio dm-crypt dm-mod dm-thin-pool dm-era dm-raid dm-zero dm-persistent-data)
 endef
 
 define KernelPackage/dm/description
