@@ -248,6 +248,7 @@ define KernelPackage/dm
   CONFIG_BLK_DEV_MD=n \
 	CONFIG_BLK_DEV_DM \
 	CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING=n \
+	CONFIG_DM_DEBUG_BLOCK_STACK_TRACING=n \
 	CONFIG_DM_PERSISTENT_DATA \
 	CONFIG_DM_SNAPSHOT \
 	CONFIG_DM_THIN_PROVISIONING \
@@ -368,11 +369,14 @@ $(call KernelPackage/md-dm/Depends,+kmod-dm-persistent-data +kmod-dm-bio-prison)
   TITLE:=DM Cache Target (experimental)
   KCONFIG:= \
   CONFIG_DM_CACHE \
-  CONFIG_DM_CACHE_SMQ
+  CONFIG_DM_CACHE_SMQ \
+  CONFIG_DM_CACHE_CLEANER
   FILES:= \
   $(LINUX_DIR)/drivers/md/dm-cache.ko \
-  $(LINUX_DIR)/drivers/md/dm-cache-smq.ko
-  AUTOLOAD:=$(call AutoLoad,30,dm-cache dm-cache-smq)
+  $(LINUX_DIR)/drivers/md/dm-cache-smq.ko \
+  $(if LINUX_3_18||LINUX_4_1||LINUX_4_4,$(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko)
+  AUTOLOAD:=$(call AutoLoad,30,dm-cache dm-cache-smq \
+    $(if LINUX_3_18||LINUX_4_1||LINUX_4_4,dmm-cache-cleaner))
 endef
 
 define KernelPackage/dm-cache/description
@@ -471,8 +475,8 @@ $(eval $(call KernelPackage,dm-multipath))
 
 
 define KernelPackage/dm-integrity
-$(call KernelPackage/md-dm/Depends,+kmod-dm-bufio +kmod-crypto-manager \
-  +kmod-md-raid456)
+$(call KernelPackage/md-dm/Depends,@!(LINUX_3_18||LINUX_4_1||LINUX_4_4||LINUX_4_9) \
+  +kmod-dm-bufio +kmod-crypto-manager +kmod-md-raid456)
   TITLE:=DM Integrity Target
   KCONFIG:=CONFIG_DM_INTEGRITY
   FILES:=$(LINUX_DIR)/drivers/md/dm-integrity.ko
