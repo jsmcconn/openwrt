@@ -374,9 +374,11 @@ $(call KernelPackage/md-dm/Depends,+kmod-dm-persistent-data +kmod-dm-bio-prison)
   FILES:= \
   $(LINUX_DIR)/drivers/md/dm-cache.ko \
   $(LINUX_DIR)/drivers/md/dm-cache-smq.ko \
-  $(if LINUX_3_18||LINUX_4_1||LINUX_4_4,$(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko)
+  $(ifneq ($(wildcard $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko),), \
+    $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko)
   AUTOLOAD:=$(call AutoLoad,30,dm-cache dm-cache-smq \
-    $(if LINUX_3_18||LINUX_4_1||LINUX_4_4,dmm-cache-cleaner))
+  $(ifneq ($(wildcard $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko),), \
+    $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko) )
 endef
 
 define KernelPackage/dm-cache/description
