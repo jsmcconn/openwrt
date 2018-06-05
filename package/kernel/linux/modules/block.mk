@@ -209,7 +209,7 @@ $(eval $(call KernelPackage,block2mtd))
 define KernelPackage/dax
   SUBMENU:=$(BLOCK_MENU)
   TITLE:=DAX: direct access to differentiated memory
-  DEPENDS:=@LINUX_4_14
+  DEPENDS:=@!(LINUX_3_18||LINUX_4_1||LINUX_4_4)
   KCONFIG:=CONFIG_DAX
   FILES:=$(LINUX_DIR)/drivers/dax/dax.ko
 endef
@@ -217,37 +217,279 @@ endef
 $(eval $(call KernelPackage,dax))
 
 
+define KernelPackage/bcache
+  SUBMENU:=$(BLOCK_MENU)
+  TITLE:=Kernel Bcache Support
+  KCONFIG:= \
+  CONFIG_MD=y \
+  CONFIG_BLK_DEV_MD=n \
+  CONFIG_BCACHE \
+  CONFIG_BCACHE_DEBUG=n \
+  CONFIG_BCACHE_CLOSURES_DEBUG=n
+  FILES:=$(LINUX_DIR)/drivers/md/bcache/bcache.ko
+  AUTOLOAD:=$(call AutoLoad,30,bcache)
+endef
+
+define KernelPackage/bcache/description
+ Kernel block layer cache support (bcache.ko)
+endef
+
+$(eval $(call KernelPackage,bcache))
+
+
 define KernelPackage/dm
   SUBMENU:=$(BLOCK_MENU)
-  TITLE:=Device Mapper
-  DEPENDS:=+kmod-crypto-manager +LINUX_4_14:kmod-dax
-  # All the "=n" are unnecessary, they're only there
-  # to stop the config from asking the question.
-  # MIRROR is M because I've needed it for pvmove.
+  TITLE:=Device Mapper (LVM2)
+  DEPENDS:=+LINUX_4_14:kmod-dax
+  # In order to handle the build select chain most modules are built here then
+  # packaged separately.
   KCONFIG:= \
-	CONFIG_BLK_DEV_MD=n \
-	CONFIG_DM_DEBUG=n \
-	CONFIG_DM_UEVENT=n \
-	CONFIG_DM_DELAY=n \
-	CONFIG_DM_LOG_WRITES=n \
-	CONFIG_DM_MQ_DEFAULT=n \
-	CONFIG_DM_MULTIPATH=n \
-	CONFIG_DM_ZERO=n \
-	CONFIG_DM_SNAPSHOT=n \
-	CONFIG_DM_LOG_USERSPACE=n \
-	CONFIG_MD=y \
+  CONFIG_MD=y \
+  CONFIG_BLK_DEV_MD=n \
 	CONFIG_BLK_DEV_DM \
-	CONFIG_DM_CRYPT \
-	CONFIG_DM_MIRROR
-  FILES:=$(LINUX_DIR)/drivers/md/dm-*.ko
-  AUTOLOAD:=$(call AutoLoad,30,dm-mod dm-log dm-region-hash dm-mirror dm-crypt)
+	CONFIG_DM_DEBUG_BLOCK_MANAGER_LOCKING=n \
+	CONFIG_DM_DEBUG_BLOCK_STACK_TRACING=n \
+	CONFIG_DM_PERSISTENT_DATA \
+	CONFIG_DM_SNAPSHOT \
+	CONFIG_DM_THIN_PROVISIONING \
+	CONFIG_DM_CACHE \
+	CONFIG_DM_CACHE_SMQ \
+	CONFIG_DM_ERA \
+	CONFIG_DM_MIRROR \
+	CONFIG_DM_ZERO
+  FILES:=$(LINUX_DIR)/drivers/md/dm-mod.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-mod)
 endef
 
 define KernelPackage/dm/description
- Kernel module necessary for LVM2 support
+ Device-mapper low level volume manager (LVM2)
 endef
 
 $(eval $(call KernelPackage,dm))
+
+
+define KernelPackage/md-dm/Depends
+  SUBMENU:=$(BLOCK_MENU)
+  DEPENDS:=kmod-dm $(1)
+endef
+
+
+define KernelPackage/dm-bufio
+$(call KernelPackage/md-dm/Depends,)
+  TITLE:=DM Bufferd I/O Support
+  KCONFIG:=CONFIG_DM_BUFIO
+  FILES:=$(LINUX_DIR)/drivers/md/dm-bufio.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-bufio)
+endef
+
+define KernelPackage/dm-bufio/description
+ LVM2 buffered io support (dm-bufio.ko)
+endef
+
+$(eval $(call KernelPackage,dm-bufio))
+
+
+define KernelPackage/dm-bio-prison
+$(call KernelPackage/md-dm/Depends,)
+  TITLE:=DM BIO Locking Support
+  KCONFIG:=CONFIG_DM_BIO_PRISON
+  FILES:=$(LINUX_DIR)/drivers/md/dm-bio-prison.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-bio-prison)
+endef
+
+define KernelPackage/dm-bio-prison/description
+ LVM2 BIO locking schemes support (dm-bio-prison.ko)
+endef
+
+$(eval $(call KernelPackage,dm-bio-prison))
+
+
+define KernelPackage/dm-persistent-data
+$(call KernelPackage/md-dm/Depends,+kmod-lib-crc32c +kmod-dm-bufio)
+  TITLE:=DM Persistent Data Support
+  KCONFIG:=CONFIG_DM_PERSISTENT_DATA
+  FILES:= $(LINUX_DIR)/drivers/md/persistent-data/dm-persistent-data.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-persistent-data)
+endef
+
+define KernelPackage/dm-persistent-data/description
+ LVM2 immutable data structure support library (dm-persistent-data.ko)
+endef
+
+$(eval $(call KernelPackage,dm-persistent-data))
+
+
+define KernelPackage/dm-crypt
+$(call KernelPackage/md-dm/Depends,+kmod-crypto-manager)
+  TITLE:=DM Crypt Target
+  KCONFIG:= CONFIG_DM_CRYPT
+  FILES:= $(LINUX_DIR)/drivers/md/dm-crypt.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-crypt)
+endef
+
+define KernelPackage/dm-crypt/description
+ LVM2 encrypted target driver (dm-crypt.ko)
+endef
+
+$(eval $(call KernelPackage,dm-crypt))
+
+
+define KernelPackage/dm-snapshot
+$(call KernelPackage/md-dm/Depends,+kmod-dm-bufio)
+  TITLE:=DM Writable Snapshot
+  KCONFIG:=CONFIG_DM_SNAPSHOT
+  FILES:=$(LINUX_DIR)/drivers/md/dm-snapshot.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-snapshot)
+endef
+
+define KernelPackage/dm-snapshot/description
+ LVM2 writable snapshot driver (dm-snapshot.ko)
+endef
+
+$(eval $(call KernelPackage,dm-snapshot))
+
+
+define KernelPackage/dm-thin-pool
+$(call KernelPackage/md-dm/Depends,+kmod-dm-persistent-data +kmod-dm-bio-prison)
+  TITLE:=DM Thin Provisioning
+  KCONFIG:=CONFIG_DM_THIN_PROVISIONING
+  FILES:=$(LINUX_DIR)/drivers/md/dm-thin-pool.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-thin-pool)
+endef
+
+define KernelPackage/dm-thin-pool/description
+ LVM2 thin provisioning and shared data snapshots (dm-thin-pool.ko)
+endef
+
+$(eval $(call KernelPackage,dm-thin-pool))
+
+
+define KernelPackage/dm-cache
+$(call KernelPackage/md-dm/Depends,+kmod-dm-persistent-data +kmod-dm-bio-prison)
+  TITLE:=DM Cache Target (experimental)
+  KCONFIG:= \
+  CONFIG_DM_CACHE \
+  CONFIG_DM_CACHE_SMQ \
+  CONFIG_DM_CACHE_CLEANER
+  FILES:= \
+  $(LINUX_DIR)/drivers/md/dm-cache.ko \
+  $(LINUX_DIR)/drivers/md/dm-cache-smq.ko \
+  $(ifneq ($(wildcard $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko),), \
+    $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko)
+  AUTOLOAD:=$(call AutoLoad,30,dm-cache dm-cache-smq \
+  $(ifneq ($(wildcard $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko),), \
+    $(LINUX_DIR)/drivers/md/dm-cache-cleaner.ko) )
+endef
+
+define KernelPackage/dm-cache/description
+ LVM2 block device caching modules (dm-cache.ko dm-cache-smq.ko)
+endef
+
+$(eval $(call KernelPackage,dm-cache))
+
+
+define KernelPackage/dm-era
+$(call KernelPackage/md-dm/Depends,+kmod-dm-persistent-data +kmod-dm-bio-prison)
+  TITLE:=DM Era Target (experimental)
+  KCONFIG:=CONFIG_DM_ERA
+  FILES:=$(LINUX_DIR)/drivers/md/dm-era.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-era)
+endef
+
+define KernelPackage/dm-era/description
+ LVM2 block device write tracking (dm-era.ko)
+endef
+
+$(eval $(call KernelPackage,dm-era))
+
+
+define KernelPackage/dm-mirror
+$(call KernelPackage/md-dm/Depends,)
+  TITLE:=DM Mirror Target
+  KCONFIG:=CONFIG_DM_MIRROR
+  FILES:= \
+  $(LINUX_DIR)/drivers/md/dm-mirror.ko \
+  $(LINUX_DIR)/drivers/md/dm-log.ko \
+  $(LINUX_DIR)/drivers/md/dm-region-hash.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-mirror dm-log dm-region-hash)
+endef
+
+define KernelPackage/dm-mirror/description
+ LVM2 mirror target driver modules (dm-mirror.ko dm-log.ko dm-region-hash.ko)
+endef
+
+$(eval $(call KernelPackage,dm-mirror))
+
+
+define KernelPackage/dm-raid
+$(call KernelPackage/md-dm/Depends,+kmod-md-mod +kmod-md-raid0 +kmod-md-raid1 \
+  +kmod-md-raid10 +kmod-md-raid456)
+  TITLE:=DM RAID Target
+  KCONFIG:=CONFIG_DM_RAID
+  FILES:=$(LINUX_DIR)/drivers/md/dm-raid.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-raid)
+endef
+
+define KernelPackage/dm-raid/description
+ LVM2 raid target support (dm-raid.ko)
+endef
+
+$(eval $(call KernelPackage,dm-raid))
+
+
+define KernelPackage/dm-zero
+$(call KernelPackage/md-dm/Depends,)
+  TITLE:=DM Zero Target
+  KCONFIG:=CONFIG_DM_ZERO
+  FILES:=$(LINUX_DIR)/drivers/md/dm-zero.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-zero)
+endef
+
+define KernelPackage/dm-zero/description
+ LVM2 zero target for recovery support (dm-zero.ko)
+endef
+
+$(eval $(call KernelPackage,dm-zero))
+
+
+define KernelPackage/dm-multipath
+$(call KernelPackage/md-dm/Depends,+kmod-scsi-core)
+  TITLE:=DM Multipath Hardware Support
+  KCONFIG:= \
+  CONFIG_DM_MULTIPATH \
+  CONFIG_DM_MULTIPATH_QL \
+  CONFIG_DM_MULTIPATH_ST
+  FILES:= \
+  $(LINUX_DIR)/drivers/md/dm-multipath.ko \
+  $(LINUX_DIR)/drivers/md/dm-round-robin.ko \
+  $(LINUX_DIR)/drivers/md/dm-queue-length.ko \
+  $(LINUX_DIR)/drivers/md/dm-service-time.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-multipath dm-round-robin dm-queue-length \
+    dm-service-time)
+endef
+
+define KernelPackage/dm-multipath/description
+ LVM2 multipath hardware support (dm-multipath.ko dm-round-robin.ko
+ dm-queue-length.ko dm-service-time.ko)
+endef
+
+$(eval $(call KernelPackage,dm-multipath))
+
+
+define KernelPackage/dm-integrity
+$(call KernelPackage/md-dm/Depends,@!(LINUX_3_18||LINUX_4_1||LINUX_4_4||LINUX_4_9) \
+  +kmod-dm-bufio +kmod-crypto-manager +kmod-md-raid456)
+  TITLE:=DM Integrity Target
+  KCONFIG:=CONFIG_DM_INTEGRITY
+  FILES:=$(LINUX_DIR)/drivers/md/dm-integrity.ko
+  AUTOLOAD:=$(call AutoLoad,30,dm-integrity)
+endef
+
+define KernelPackage/dm-integrity/description
+ LVM2 integrity target for dm-crypt support (dm-integrity.ko)
+endef
+
+$(eval $(call KernelPackage,dm-integrity))
 
 
 define KernelPackage/md-mod
