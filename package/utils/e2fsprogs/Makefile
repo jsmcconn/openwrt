@@ -107,6 +107,12 @@ $(call Package/e2fsprogs)
   DEPENDS:= +e2fsprogs
 endef
 
+define Package/e4defrag
+$(call Package/e2fsprogs)
+  TITLE:=Ext4 Filesystem defrag utility
+  DEPENDS:= +e2fsprogs
+endef
+
 define Package/filefrag
 $(call Package/e2fsprogs)
   TITLE:=Ext2 Filesystem file fragmentation report utility
@@ -276,6 +282,11 @@ define Package/e2freefrag/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/e2freefrag $(1)/usr/sbin/
 endef
 
+define Package/e4defrag/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/e4defrag $(1)/usr/sbin/
+endef
+
 define Package/filefrag/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/filefrag $(1)/usr/sbin/
@@ -306,6 +317,7 @@ $(eval $(call BuildPackage,resize2fs))
 $(eval $(call BuildPackage,badblocks))
 $(eval $(call BuildPackage,dumpe2fs))
 $(eval $(call BuildPackage,e2freefrag))
+$(eval $(call BuildPackage,e4defrag))
 $(eval $(call BuildPackage,filefrag))
 $(eval $(call BuildPackage,debugfs))
 $(eval $(call BuildPackage,chattr))
