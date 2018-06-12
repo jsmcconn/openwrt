@@ -102,7 +102,7 @@ zram_comp_streams()
     local logical_cpus=$( grep -ci "^processor" /proc/cpuinfo )
     [ $logical_cpus -gt 1 ] || return 1
     local zram_comp_streams="$( uci -q get system.@system[0].zram_comp_streams )"
-    [ "$zram_comp_streams" -le "$logical_cpus" ] || zram_comp_streams=$logical_cpus
+    [ -n "$zram_comp_streams" ] && [ "$zram_comp_streams" -le "$logical_cpus" ] || zram_comp_streams=$logical_cpus
     if [ -e /sys/block/$( basename $dev )/max_comp_streams ]; then
 	logger -s -t zram_comp_streams -p daemon.debug "Set max compression streams to '$zram_comp_streams' for zram '$dev'"
 	echo $zram_comp_streams > /sys/block/$( basename $dev )/max_comp_streams
