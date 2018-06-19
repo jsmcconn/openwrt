@@ -172,21 +172,6 @@ define Package/dmesg/description
  dmesg  is used to examine or control the kernel ring buffer
 endef
 
-define Package/eject
-$(call Package/util-linux/Default)
-  TITLE:=properly disconnect external mass-storage devices
-  DEPENDS:= +libblkid +libmount +libuuid
-  SUBMENU=Disc
-endef
-
-define Package/eject/description
-  This little program will eject CD-ROMs (assuming your drive supports the
-  CDROMEJECT ioctl). It also allows setting the autoeject feature.On supported
-  ATAPI/IDE multi-disc CD-ROM changers, it allows changing the active disc.
-  You can also use eject to properly disconnect external mass-storage devices
-  like digital cameras or portable music players.
-endef
-
 define Package/fdisk
 $(call Package/util-linux/Default)
   TITLE:=manipulate disk partition table
@@ -595,11 +580,6 @@ define Package/dmesg/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dmesg $(1)/usr/bin/
 endef
 
-define Package/eject/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/eject $(1)/usr/bin/
-endef
-
 define Package/fdisk/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fdisk $(1)/usr/sbin/
@@ -757,7 +737,6 @@ $(eval $(call BuildPackage,blkid))
 $(eval $(call BuildPackage,cal))
 $(eval $(call BuildPackage,cfdisk))
 $(eval $(call BuildPackage,dmesg))
-$(eval $(call BuildPackage,eject))
 $(eval $(call BuildPackage,fdisk))
 $(eval $(call BuildPackage,findfs))
 $(eval $(call BuildPackage,flock))
