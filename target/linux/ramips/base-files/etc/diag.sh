@@ -22,6 +22,7 @@ get_status_led() {
 	dch-m225|\
 	dir-860l-b1|\
 	e1700|\
+	elecom,wrc-1167ghbk2-s|\
 	ex2700|\
 	ex3700|\
 	fonera20n|\
@@ -78,6 +79,7 @@ get_status_led() {
 	awapn2403|\
 	dir-645|\
 	sk-wb8|\
+	tplink,c2-v1|\
 	wrh-300cr)
 		status_led="$boardname:green:wps"
 		;;
@@ -160,6 +162,7 @@ get_status_led() {
 		status_led="$boardname:blue:power"
 		;;
 	dlink,dap-1522-a1|\
+	phicomm,k2g|\
 	k2p|\
 	m3|\
 	mir3g|\
@@ -205,6 +208,9 @@ get_status_led() {
 	m4-4M|\
 	m4-8M)
 		status_led="m4:blue:status"
+		;;
+	mikrotik,rbm33g)
+		status_led="rbm33g:green:usr"
 		;;
 	miwifi-mini|\
 	zte-q7)
