@@ -80,6 +80,7 @@ start_service() {
 	config_foreach mdadm_common mdadm
 	config_foreach mdadm_array array
 
+	sleep 12
 	$PROG --assemble --scan --config="$CONF"
 
 	procd_open_instance
