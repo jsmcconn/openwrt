@@ -581,7 +581,6 @@ CONFIG_PACKAGE_python-logging-src=m
 CONFIG_PACKAGE_python-lxml=m
 CONFIG_PACKAGE_python-multiprocessing=m
 CONFIG_PACKAGE_python-multiprocessing-src=m
-CONFIG_PACKAGE_python-mysql=m
 CONFIG_PACKAGE_python-ncurses=m
 CONFIG_PACKAGE_python-ncurses-src=m
 CONFIG_PACKAGE_python-openssl=m
