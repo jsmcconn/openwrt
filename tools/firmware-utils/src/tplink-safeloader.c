@@ -860,15 +860,10 @@ static struct device_info boards[] = {
 		.support_trail = '\x00',
 		.soft_ver = NULL,
 
-		/**
-		    We use a bigger os-image partition than the stock images (and thus
-		    smaller file-system), as our kernel doesn't fit in the stock firmware's
-		    1MB os-image.
-		*/
+		/* We're using a dynamic kernel/rootfs split here */
 		.partitions = {
 			{"fs-uboot", 0x00000, 0x20000},
-			{"os-image", 0x20000, 0x200000},
-			{"file-system", 0x220000, 0xd30000},
+			{"firmware", 0x20000, 0xf30000},
 			{"default-mac", 0xf50000, 0x00200},
 			{"pin", 0xf50200, 0x00200},
 			{"product-info", 0xf50400, 0x0fc00},
@@ -1077,6 +1072,46 @@ static struct device_info boards[] = {
 			{"user-config", 0x630000, 0x10000},
 			{"default-config", 0x640000, 0x10000},
 			{"radio", 0x7f0000, 0x10000},
+			{NULL, 0, 0}
+		},
+
+		.first_sysupgrade_partition = "os-image",
+		.last_sysupgrade_partition = "file-system"
+	},
+
+	/** Firmware layout for the RE450 v2 */
+	{
+		.id = "RE450-V2",
+		.vendor = "",
+		.support_list =
+			"SupportList:\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:00000000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:55530000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:45550000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:4A500000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:43410000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:41550000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:41530000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:4B520000}\r\n"
+			"{product_name:RE450,product_ver:2.0.0,special_id:42520000}\r\n",
+		.support_trail = '\x00',
+		.soft_ver = NULL,
+
+		/* We're using a dynamic kernel/rootfs split here */
+		.partitions = {
+			{"fs-uboot", 0x00000, 0x20000},
+			{"firmware", 0x20000, 0x5e0000},
+			{"partition-table", 0x600000, 0x02000},
+			{"default-mac", 0x610000, 0x00020},
+			{"pin", 0x610100, 0x00020},
+			{"product-info", 0x611100, 0x01000},
+			{"soft-version", 0x620000, 0x01000},
+			{"support-list", 0x621000, 0x01000},
+			{"profile", 0x622000, 0x08000},
+			{"user-config", 0x630000, 0x10000},
+			{"default-config", 0x640000, 0x10000},
+			{"radio", 0x7f0000, 0x10000},
+
 			{NULL, 0, 0}
 		},
 
@@ -1603,6 +1638,10 @@ static int add_flash_partition(
 	}
 
 	part_list->name = calloc(1, strlen(name) + 1);
+	if (!part_list->name) {
+		error(1, 0, "Unable to allocate memory");
+	}
+
 	memcpy((char *)part_list->name, name, strlen(name));
 	part_list->base = base;
 	part_list->size = size;
